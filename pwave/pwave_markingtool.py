@@ -32,7 +32,7 @@ import tkMessageBox
 curfilepath =  os.path.realpath(__file__)
 curfolderpath = os.path.dirname(curfilepath)
 # my project components
-from QTdata.loadQTdata import QTloader
+from mcmc.post_p import post_p_mcmc
 
 
 
@@ -86,6 +86,7 @@ class PointBrowser(object):
         self.recInd = start_index
         self.recname = ''
         self.rawSig = raw_sig
+        self.expLabels = None
 
         tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),    
              (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),    
@@ -105,9 +106,10 @@ class PointBrowser(object):
             return
 
         if event.key == 'n':
-            # Finishing marking 
-            p_finder = PwaveDelineator()
-            p_finder.find_p(self.rawSig, self.poslist)
+            # Finishing marking
+            annots = PwaveBroadcast(self.rawSig, self.poslist, 500)
+            annots = post_p_mcmc(self.rawSig, annots, 500)
+            self.expLabels = annots
             # clear Marker List
             self.reDraw()
             return None
@@ -209,7 +211,8 @@ class PointBrowser(object):
         ax.set_title('QT {} (Index = {})'.format(self.recname,self.recInd))
         ax.plot(self.rawSig, picker=5)  # 5 points tolerance
         # plot Expert Labels
-        # self.plotExpertLabels(ax)
+        if self.expLabels is not None:
+            self.plotExpertLabels(ax)
 
         # draw Markers
         for pos in self.poslist:
@@ -297,12 +300,12 @@ def PwaveBroadcast(raw_sig, pwave_poslist, fs):
         p = rpos - Rpos + pwave_poslist[1]
         poffset = rpos - Rpos + pwave_poslist[2]
 
-        if ponset >= 0 && ponset < len(raw_sig):
-            annots.append((ponset, 'Ponset'))
-        if p >= 0 && p < len(raw_sig):
-            annots.append((p, 'P'))
-        if poffset >= 0 && poffset < len(raw_sig):
-            annots.append((poffset, 'Poffset'))
+        if ponset >= 0 and ponset < len(raw_sig):
+            annots.append([ponset, 'Ponset'])
+        if p >= 0 and p < len(raw_sig):
+            annots.append([p, 'P'])
+        if poffset >= 0 and poffset < len(raw_sig):
+            annots.append([poffset, 'Poffset'])
     return annots
     
 
